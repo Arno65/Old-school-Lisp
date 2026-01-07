@@ -18,6 +18,7 @@
 ;;                                The King can move to 'check' position - check for free positions
 ;;  version 0.01m   2026-01-07    Adding a test whether after a player's move the player's King is not checked.
 ;;                                Refactor a lot on the 'all-moves' and 'all-moves-list' functions
+;;  version 0.01n   2026-01-08    Some minor changes and removing obsolete code
 ;;
 ;;
 ;; W.T.D.: Think about valuating a board position - then write the function...
@@ -25,7 +26,7 @@
 ;;         Then... start the enigine with 'mate in 2' samples
 ;;
 ;;
-;;  (cl) 2025-12-31, 2026-01-07 by Arno Jacobs
+;;  (cl) 2025-12-31, 2026-01-08 by Arno Jacobs
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 ;; Info on chess
 ;;
@@ -56,6 +57,7 @@
 (define En-Passant 20)
 (define Castling 30)
 ;; 'promotion' is not a state
+
 (define CheckMate 42)
 (define Quit      99)
 (define QuitGame (list (list Quit Quit) (list Quit Quit))) ;; format as a move
@@ -193,18 +195,6 @@
         (move-number (string (integer->char (+ 48 (second move))))))
     (string-append move-letter move-number)))
 
-(define (pretty-move-plus from-move to-move)
-  (string-append (pretty-move from-move) "-" (pretty-move to-move) "  "))
-                   
-;;; List for one piece
-(define (pretty-list-move board move)
-  (let ((piece-location (first move))
-        (from-move (pretty-move (first move)))
-        (to-move   (pretty-move (second move))))
-    (string-append
-     (pretty-piece-plus (location-value board (first piece-location) (second  piece-location)))
-     " : " from-move "-" to-move "\n")))
-
 (define (equal-piece base-move test-move)
   (equal? (first base-move) (first test-move)))
 
@@ -249,9 +239,8 @@
     (string-append piece-description " :  " (pretty-moves-plus from-move to-moves) "\n")))
 
 ;;; A bit pretty print of all moves
-(define (list-moves board all-moves)
-  (let ((moves (sweep board all-moves)))
-    (display (apply string-append (map pretty-list-moves moves)))))
+(define (list-moves moves)
+  (display (apply string-append (map pretty-list-moves moves))))
 
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 ;; An initial chess board
@@ -302,7 +291,7 @@
 (define (erase-en-passant-states board)
   (map (lambda (pieces) (row-erase-en-passant-states pieces)) board))
 
-;; Next step is to generate a list of all possible moves on a board for the player that is allowed to make a move
+;; Next step is to generate a list of all possible moves on a board for the player at move
 ;; First - generate a list of all possible moves for a given location on the board
 ;; Locations on the chess board are a1..h8
 ;; In this code for 'a' through 'h' we use 1 through 8, so e2 is entered as (5 2)
@@ -312,9 +301,6 @@
 
 (define (get-piece-state piece-value)
   (* 10 (quotient (abs piece-value) 10)))
-
-(define (is-first-move piece-value)
-  (= First-Move (get-piece-state piece-value)))
 
 (define (can-take-En-Passant piece-value)
   (= En-Passant (get-piece-state piece-value)))
@@ -349,8 +335,6 @@
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 ;; King moves
 ;;
-;; !!!!!!!!!!!!!!! Do check is the new Kings position is FREE. !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-;; 
 ;; Only check the standard King moves        
 (define (check-king-moves board x y piece-colour possible-moves)
   (filter (lambda (move) (check-move-King-Knight board x y piece-colour move)) possible-moves))
@@ -779,8 +763,8 @@
                           (- (char->integer (fourth move)) 48)))
               (cond ((equal? cmd #\Q) QuitGame)
                     ((equal? cmd #\b) (display-board board))
-                    ((equal? cmd #\m) (list-moves board (all-moves-list board players-colour)))
-                    ((equal? cmd #\M) (list-moves board (all-moves-list board (negate players-colour))))
+                    ((equal? cmd #\m) (list-moves (all-moves board players-colour)))
+                    ((equal? cmd #\M) (list-moves (all-moves board (negate players-colour))))
                     (else              NoMoves)))))))
 
 ;; Read, parse and check for legality of the move
@@ -813,7 +797,12 @@
   (if (is-checked-by board players-colour)
       (string-append "\n* Check!  by " (pretty-colour-plus players-colour) "\n\n")
       ""))
-  
+
+;; Extra function to show to board with the Checkmate position
+(define (check-mate-board board players-colour)
+  (display-board board)
+  (* players-colour CheckMate))
+
 (define (game-loop board players-colour)
   (display-board board)
   (display (show-check board (opponents-colour players-colour)))
@@ -822,19 +811,20 @@
         Quit
         (let ((next-board (make-move board move)))
           (if (is-checkmate-by next-board players-colour)
-              (* players-colour CheckMate)
+              (check-mate-board next-board players-colour)
               (game-loop next-board (opponents-colour players-colour)))))))
 
-;; Quit or Checkmate test
-(define (game-1 board player-colour)
+;; Start the game-loop en show end status
+;; Incl. Quit or Checkmate test
+(define (game board player-colour)
   (let ((a-player (game-loop board player-colour)))
     (if (= (abs a-player) CheckMate)
-        (string-append "\n* Checkmate!  by " (pretty-colour-plus (colour a-player)) "\nBye bye.\n\n")
-        "\nBye bye.\n\n")))
+        (display (string-append
+                  "\n* * *  Checkmate! * * *   by "
+                  (pretty-colour-plus (colour a-player))
+                  "\nBye bye.\n\n"))
+        (display "\nYou quit, bye bye.\n\n"))))
 
-;; Start the game-loop en show end status
-(define (game board player-colour)
-  (display (game-1 board player-colour)))
 
 
 
@@ -847,8 +837,8 @@
 (define (c1) (game initial-board white))
 
  
+;;
 (c1)
-
 
 ;;
 ;; End of code.
