@@ -22,10 +22,7 @@
 ;;  version 0.01o   2026-01-09    Work on the opening library
 ;;
 ;;
-;; W.T.D.: For the opening library format the board to a 64 character (UTF-8) ascii string
-;;         This can be compared with the openings library which may have the prefered move
-;;         --
-;;         Think about valuating a board position - then write the function...
+;; W.T.D.: Think about valuating a board position - then write the function...
 ;;         Add creating a list of moves in official chess notation
 ;;         Then... start the enigine with 'mate in 2' samples
 ;;
