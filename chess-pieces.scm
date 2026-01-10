@@ -1,6 +1,12 @@
-
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
-;; The basic pieces dataset
+;; "chess-pieces.scm"
+;;
+;;  Creating a Chess engine in Lisp (using Scheme in Racket)
+;;
+;;  version 0.02a   2026-01-10    From a first draft of 'chess.scm', pieces data
+;; 
+;;  (cl) 2025-12-31, 2026-01-10 by Arno Jacobs
+;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 ;;
 ;; Using the 'scheme' language in DrRacket
 ;; 
