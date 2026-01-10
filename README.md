@@ -1,13 +1,13 @@
-# Old School LISP
+# Old School Lisp
 
-Creating code in LISP (Scheme) like in the 'old days'
+Creating code in  Lisp / Scheme  like in the 'old days'
 
 First project is working on a chess-engine.\
 For this I'm using DrRacket (#lang scheme).
 
 This is a learning project.\
-Learn old-school LISP programming.\
-Am I able to build a chess engine.
+Learn old-school Lisp programming.\
+Am I able to build a chess engine?
 
 
 
