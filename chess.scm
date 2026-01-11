@@ -21,6 +21,7 @@
 ;;  version 0.01p   2026-01-10    Debuged Castling. My Casting on Rook was TOO strict.
 ;;                                A first (not standard) list of moves is created, and at least shown at the end.
 ;;  version 0.01q   2026-01-10    Added promotion, Queen (major) or Knight (minor). Added some helper information.
+;;  version 0.01r   2026-01-11    Bug repair for pawn take move. Added some opening moves and Mate-in-2 boards.
 ;;
 ;;
 ;; W.T.D.: Think about valuating a board position - then write the function...
@@ -28,7 +29,7 @@
 ;;         Then... start the enigine with 'mate in 2' samples
 ;;
 ;;
-;;  (cl) 2025-12-31, 2026-01-10 by Arno Jacobs
+;;  (cl) 2025-12-31, 2026-01-11 by Arno Jacobs
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 ;; Info on chess
 ;;
@@ -42,8 +43,8 @@
 ;;
 #lang scheme
 
-(require "chess-pieces.scm")
 (require "boards.scm")
+(require "chess-pieces.scm")
 (require "opening-library.scm")
 
 (define code-info
@@ -630,7 +631,7 @@
   ;; Test for promotion
   (if (or (= 1 to-y) (= 8 to-y))
       (work-promotion-move board from-x from-y to-x to-y)
-      (if (= (abs (- from-x to-x)) 1)
+      (if (and (= (abs (- from-x to-x)) 1) (= empty (location-value board to-x to-y)))
           (work-pawn-en-passant-take board from-x from-y to-x to-y)
           (if (= (abs (- from-y to-y)) 1)
               (work-next-standard-move board from-x from-y to-x to-y)
@@ -660,7 +661,7 @@
 (define (current-piece-data board x y)
   (let ((piece-value (location-value board x y)))
     (list (get-piece-type piece-value) (get-piece-state piece-value))))
-    
+
 ;; Move is checked for legality
 ;; 
 (define (make-move board move)
@@ -745,7 +746,7 @@
 ;;  p     set promotion piece to minor promotion (Knight) before the actual move
 ;;  P     set promotion piece to major promotion (Queen) before the actual move
 ;;  s     show the current promotion piece
-;;  Q     quit the game
+;;  q     quit the game
 ;;
 
 (define (display-helper-information)
@@ -764,7 +765,7 @@
   (display "    p     set promotion piece to minor promotion (Knight) before the actual move\n")
   (display "    P     set promotion piece to major promotion (Queen) before the actual move\n")
   (display "    s     show the current promotion piece\n")
-  (display "    Q     quit the game.\n\n"))
+  (display "    q     quit the game.\n\n"))
 
 (define (move-string-to-list move)
   (list (list (- (char->integer (first  move)) 96)
@@ -790,7 +791,7 @@
                     ((equal? cmd #\p) (set-minor-promotion))
                     ((equal? cmd #\P) (set-major-promotion))
                     ((equal? cmd #\s) (display (pretty-promotion-piece)))
-                    ((equal? cmd #\Q) QuitGame)                    
+                    ((equal? cmd #\q) QuitGame)                    
                     (else              NoMoves)))))))
 
 ;; Read, parse and check for legality of the move
@@ -804,6 +805,11 @@
   (define input-move (read-line))
   (let ((move (parse-move board players-colour input-move game))
         (legal-moves (all-moves-list board players-colour)))
+    (if (void? move)
+        (display "")
+        (if (< (first (first move)) 9)
+            (display (string-append "\nmove: " (pretty-from-to move)))
+            (display "")))
     (if (or (equal? move QuitGame) (member move legal-moves))
         move
         NoMoves)))
@@ -948,9 +954,14 @@
 (define (t1) (game initial-board white))
 (define (t2) (game test-board    white))
 
+(define (m2w1) (game Mate-in-2-white-01 white))
+(define (m2w2) (game Mate-in-2-white-02 white))
+
 ;;
 (t1)
 ;;(t2)
+;;(m2w1)
+;;(m2w2)
 
 
 ;;
