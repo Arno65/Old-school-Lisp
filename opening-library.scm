@@ -17,6 +17,16 @@
 
 (provide opening-library)
 
+
+;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
+;; Change colour notation to match with FEN notation
+;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
+;; Some FEN examples
+;; rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -
+;; r2qkb1r/3ppppp/b1n2n2/ppp5/PPP5/B1N2N2/3PPPPP/R2QKB1R w KQkq -
+;; 3k4/R6R/3n4/8/8/8/8/K7 w - -
+
+
 (define opening-library
   (list
 ;; e4

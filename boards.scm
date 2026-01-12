@@ -77,6 +77,7 @@
    (list empty empty empty empty empty empty empty (piece black King))))
 
 ;; Mate in 2 - white to play
+;; FEN: 3k4/R6R/3n4/8/8/8/8/K7 w - -
 (define Mate-in-2-white-02
   (list
    (list (piece white King) empty empty empty empty empty empty empty)
@@ -101,5 +102,11 @@
    (list empty empty empty empty empty empty empty empty)
    (list empty empty empty empty empty empty empty empty)))
 
+
+;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
+;; Some FEN examples
+;; rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -
+;; r2qkb1r/3ppppp/b1n2n2/ppp5/PPP5/B1N2N2/3PPPPP/R2QKB1R w KQkq -
+;; 3k4/R6R/3n4/8/8/8/8/K7 w - -
 
 ;; End of this code
