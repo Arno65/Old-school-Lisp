@@ -24,6 +24,7 @@
 ;;  version 0.01r   2026-01-11    Bug repair for pawn take move. Added some opening moves and Mate-in-2 boards.
 ;;  version 0.01s   2026-01-12    Started the evaluator for the board position
 ;;  version 0.01t   2026-01-12    Added FEN - first conversion from board to FEN
+;;  version 0.01u   2026-01-14    Complete reformatting opening library and refactoring functions
 ;;
 ;;
 ;; W.T.D.: Think about valuating a board position - then write the function...
@@ -32,7 +33,7 @@
 ;;         Add FEN (input/output)
 ;;
 ;;
-;;  (cl) 2025-12-31, 2026-01-12 by Arno Jacobs
+;;  (cl) 2025-12-31, 2026-01-14 by Arno Jacobs
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 ;; Info on chess
 ;;
@@ -61,8 +62,8 @@
 (define code-info
   (string-append
    "\n\n* * *   a tiny and simple Lisp/Scheme chess engine   * * *\n\n"
-   "version 0.01t  "
-   "(cl) 2025-12-31, 2026-01-12  by Arno Jacobs\n\n"))
+   "version 0.01u  "
+   "(cl) 2025-12-31, 2026-01-14  by Arno Jacobs\n\n"))
 
 ;; Chess board dimensions
 (define width  8)
@@ -73,6 +74,10 @@
 (define QuitGame (list (list Quit Quit) (list Quit Quit))) ;; format as a move
 
 (define NoMoves null) ;; or '()
+
+;; Testing if there is content in a list
+(define (is-not-null ls)
+  (if (null? ls) #f #t))
 
 ;; Helper for a promotion piece
 (define *promotion-piece* Queen)
@@ -757,8 +762,6 @@
 ;;  h     show this helper information
 ;;  m     show all possible moves for the current player
 ;;  M     show all possible moves for the opponent
-;;  o     show the current board in a openinglibrary format
-;;  O     show the complete opening library in a opening library format
 ;;  p     set promotion piece to minor promotion (Knight) before the actual move
 ;;  P     set promotion piece to major promotion (Queen) before the actual move
 ;;  s     show the current promotion piece
@@ -778,8 +781,6 @@
   (display "    h     show this helper information\n")
   (display "    m     show all possible moves for the current player\n")
   (display "    M     show all possible moves for the opponent\n")
-  (display "    o     show the current board in a opening library format\n")
-  (display "    O     show the complete opening library in a opening library format\n")
   (display "    p     set promotion piece to minor promotion (Knight) before the actual move\n")
   (display "    P     set promotion piece to major promotion (Queen) before the actual move\n")
   (display "    s     show the current promotion piece\n")
@@ -799,15 +800,13 @@
           (if (= 4 (length move))
               (move-string-to-list move)
               (cond ((equal? cmd #\b) (display-board board))
-                    ((equal? cmd #\c) (Lisp-code-generated-move board player-colour))
+                    ((equal? cmd #\c) (Lisp-code-generated-move game board player-colour))
                     ((equal? cmd #\e) (display-evaluation-score board player-colour))
                     ((equal? cmd #\f) (display-FEN board player-colour))
                     ((equal? cmd #\g) (display-game game))
                     ((equal? cmd #\h) (display-helper-information))
                     ((equal? cmd #\m) (list-moves (all-moves board player-colour)))
                     ((equal? cmd #\M) (list-moves (all-moves board (negate player-colour))))
-                    ((equal? cmd #\o) (display-opening-library-style board))
-                    ((equal? cmd #\O) (display opening-library))
                     ((equal? cmd #\p) (set-minor-promotion))
                     ((equal? cmd #\P) (set-major-promotion))
                     ((equal? cmd #\s) (display (pretty-promotion-piece)))
@@ -835,7 +834,12 @@
         NoMoves)))
 
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
-;; Openings library incl. helpers
+;; FEN conversions
+;; First: open library format to FEN
+;;
+;; Change the '.' for empty fields to the number of consecutive empty fields
+;;
+;; First some FEN helpers - old openings library incl. helpers
 ;;
 
 (define (get-piece-character piece-type)
@@ -861,19 +865,6 @@
 (define (opening-library-style board)
   (apply string-append 
          (reverse (map opening-library-style-row board))))
-
-(define (display-opening-library-style board)
-  (display "\n")
-  (display (opening-library-style board))
-  (display "\n"))
-
-
-;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
-;; FEN conversions
-;; First: open library format to FEN
-;;
-;; Change the '.' for empty fields to the number of consecutive empty fields
-;;
 
 (define (count-empties-i rps)
   (if (null? rps)
@@ -990,23 +981,43 @@
 ;; Code will first check the 'opening library' - and be aware - there is NO check for legal moves on that library
 
 
+;; Pick a random element from a list
+(define (random-element ls)
+  (nth ls (random (length ls))))
+
 ;; This code is useless, but it will generate legal moves
 ;;
 (define (random-move board player-colour)
   (let ((legal-moves (all-moves-list board player-colour)))
-    (nth legal-moves (random (length legal-moves)))))
+    (random-element legal-moves)))
 
 ;; Look up board position in opening library
-(define (filter-opening-library-moves ols-board library)
-  (map second (filter (lambda (oll) (string=? ols-board (first oll))) library)))
 
-(define (Lisp-code-generated-move board player-colour)
-  (let ((open-move (filter-opening-library-moves (opening-library-style board) opening-library)))
-    (if (null? open-move)
-        (random-move board player-colour)
-        (move-string-to-list (string->list (first open-move))))))
+(define (get-opening-move game library-game)
+  (let ((gln (length game))
+        (lln (length library-game)))
+    (if (< gln lln)
+        (if (equal? game (take library-game gln))
+            (first (drop library-game gln))
+            null)
+        null)))
+
+(define (get-opening-library-moves game library)
+  (filter is-not-null (map (lambda (library-game) (get-opening-move game library-game)) library)))
+
+(define (Lisp-code-generated-move game board player-colour)
+  (if (null? game)
+      (list (list 5 2) (list 5 4))   ;; white will always open with "e2-e4"
+      (if (= player-colour white)
+          (let ((open-moves (get-opening-library-moves (reverse game) opening-library-white)))
+            (if (null? open-moves)
+                (random-move board player-colour)
+                (random-element open-moves)))
+          (let ((open-moves (get-opening-library-moves (reverse game) opening-library-black)))
+            (if (null? open-moves)
+                (random-move board player-colour)
+                (random-element open-moves))) ) ))
         
-
 
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 ;; Display the list of moves made in the game
@@ -1078,7 +1089,6 @@
                   (pretty-colour-plus (colour (first game)))
                   "\n\nThanks for the game. Bye bye.\n\n"))
         (display "\nYou quit, thanks for the game. Bye bye.\n\n"))))
-
 
 
 ;;
