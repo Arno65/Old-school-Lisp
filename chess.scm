@@ -25,6 +25,7 @@
 ;;  version 0.01s   2026-01-12    Started the evaluator for the board position
 ;;  version 0.01t   2026-01-12    Added FEN - first conversion from board to FEN
 ;;  version 0.01u   2026-01-14    Complete reformatting opening library and refactoring functions
+;;  version 0.02a   2026-01-15    Starting 'best-move' function (now 1 ply only...)
 ;;
 ;;
 ;; W.T.D.: Think about valuating a board position - then write the function...
@@ -33,7 +34,7 @@
 ;;         Add FEN (input/output)
 ;;
 ;;
-;;  (cl) 2025-12-31, 2026-01-14 by Arno Jacobs
+;;  (cl) 2025-12-31, 2026-01-15 by Arno Jacobs
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 ;; Info on chess
 ;;
@@ -62,8 +63,8 @@
 (define code-info
   (string-append
    "\n\n* * *   a tiny and simple Lisp/Scheme chess engine   * * *\n\n"
-   "version 0.01u  "
-   "(cl) 2025-12-31, 2026-01-14  by Arno Jacobs\n\n"))
+   "version 0.02a  "
+   "(cl) 2025-12-31, 2026-01-15  by Arno Jacobs\n\n"))
 
 ;; Chess board dimensions
 (define width  8)
@@ -974,6 +975,7 @@
                   0)))))
 
 (define (display-evaluation-score board player-colour)
+  (display "current board value: ")
   (display (evaluate board player-colour)))
 
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
@@ -1011,13 +1013,51 @@
       (if (= player-colour white)
           (let ((open-moves (get-opening-library-moves (reverse game) opening-library-white)))
             (if (null? open-moves)
-                (random-move board player-colour)
+                (best-move board player-colour)
                 (random-element open-moves)))
           (let ((open-moves (get-opening-library-moves (reverse game) opening-library-black)))
             (if (null? open-moves)
-                (random-move board player-colour)
-                (random-element open-moves))) ) ))
+                (best-move board player-colour)
+                (random-element open-moves))))))
         
+
+
+;;
+;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
+;; Mate-in-2 ?
+;;
+
+;; Sort with highest scores at the top
+(define (score-sort scores)
+  (if (null? scores)
+      null
+      (let ((s1 (first (first scores))))
+        (define smaller (filter (lambda (score) (< (first score) s1)) scores))
+        (define equals  (filter (lambda (score) (= (first score) s1)) scores))
+        (define bigger  (filter (lambda (score) (> (first score) s1)) scores))
+        (append (score-sort bigger)
+                equals
+                (score-sort smaller)))))
+
+(define (filter-top-scores scores)
+  (let ((scs (score-sort scores)))
+    (define top-score (first (first scs)))
+    (filter (lambda (score) (= (first score) top-score)) scores)))
+        
+(define (move-score move board player-colour)
+  (if (null? move)
+      NoMoves
+      (list (evaluate (make-move board move) player-colour) move)))
+
+(define (deep-search depth board player-colour)
+  (let ((next-moves (all-moves-list board player-colour)))
+    (if (<= depth 1)
+        (map (lambda (move) (move-score move board player-colour)) next-moves)
+        (map (lambda (move) (move-score move board player-colour)) next-moves)))) ;;; uh.... next?
+
+(define (best-move board player-colour)
+  (let ((best-moves (filter-top-scores (deep-search 3 board player-colour))))   ;; depth is 3 for mat in two
+    (second (random-element best-moves))))
 
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 ;; Display the list of moves made in the game
@@ -1096,6 +1136,8 @@
 ;; Testing & debugging . . .
 ;;
 
+(define tb test-board)
+
 ;;
 (define (t1) (game initial-board white))
 (define (t2) (game test-board    white))
@@ -1108,7 +1150,6 @@
 ;;(t2)
 ;;(m2w1)
 ;;(m2w2)
-
 
 ;;
 ;; End of code.
