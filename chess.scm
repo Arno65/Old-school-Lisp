@@ -1169,14 +1169,21 @@
 
 (define (m2w1) (game Mate-in-2-white-01 white))
 (define (m2w2) (game Mate-in-2-white-02 white))
+(define (m2w3) (game Mate-in-2-white-03 white))
+(define (m2w4) (game Mate-in-2-white-04 white))
 (define (m2b1) (game Mate-in-2-black-01 black))
+(define (mNw1) (game Mate-in-N-white-01 white))
+
 
 ;;
 (t1)
 ;;(t2)
 ;;(m2w1)
 ;;(m2w2)
+;;(m2w3)
+;;(m2w4)
 ;;(m2b1)
+;;(mNw1)
 
 ;;
 ;; End of code.
