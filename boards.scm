@@ -20,7 +20,6 @@
 (require "chess-pieces.scm")
 
 (provide initial-board)
-(provide test-board)
 (provide Mate-in-2-white-01)
 (provide Mate-in-2-white-02)
 (provide Mate-in-2-white-03)
@@ -48,23 +47,6 @@
          (piece black Pawn) (piece black Pawn) (piece black Pawn) (piece black Pawn))
    (list (piece black Rook Castling) (piece black Knight) (piece black Bishop) (piece black Queen)
          (piece black King Castling) (piece black Bishop) (piece black Knight) (piece black Rook Castling))))
-
-
-(define test-board
-  (list
-   (list (piece white Rook Castling) (piece white Knight) (piece white Bishop) (piece white Queen)
-         (piece white King Castling) (piece white Bishop) (piece white Knight) (piece white Rook Castling))
-   (list (piece white Pawn) (piece white Pawn) (piece white Pawn) (piece white Pawn)
-         (piece white Pawn) (piece white Pawn) (piece white Pawn) (piece white Pawn))
-   (list empty empty empty empty empty empty empty empty)
-   (list empty empty empty empty empty empty empty empty)
-   (list empty empty empty empty empty empty empty empty)
-   (list empty empty empty empty empty empty empty empty)
-   (list (piece black Pawn) (piece black Pawn) (piece black Pawn) (piece black Pawn)
-         (piece black Pawn) (piece black Pawn) (piece black Pawn) (piece black Pawn))
-   (list (piece black Rook Castling) (piece black Knight) (piece black Bishop) (piece black Queen)
-         (piece black King Castling) (piece black Bishop) (piece black Knight) (piece black Rook Castling))))
-
 
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 ;; Mate in 2 - white to play
@@ -246,9 +228,5 @@
 
 
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
-;; Some FEN examples
-;; rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -
-;; r2qkb1r/3ppppp/b1n2n2/ppp5/PPP5/B1N2N2/3PPPPP/R2QKB1R w KQkq -
-;; 3k4/R6R/3n4/8/8/8/8/K7 w - -
-
+;;
 ;; End of this code
