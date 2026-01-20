@@ -1218,20 +1218,22 @@
 (define (m2w3) (game Mate-in-2-white-03 white))
 (define (m2w4) (game Mate-in-2-white-04 white))
 (define (m2w5) (game Mate-in-2-white-05 white))
+(define (m2w6) (game Mate-in-2-white-06 white))
 (define (m2b1) (game Mate-in-2-black-01 black))
 (define (m4w1) (game Mate-in-4-white-01 white))
 (define (mNw1) (game Mate-in-N-white-01 white))
 (define (pD)   (game pre-draw white))
 
 
-;;
-(t1)
+;;(t1)
 ;;(t2)
 ;;(m2w1)
 ;;(m2w2)
 ;;(m2w3)
 ;;(m2w4)
 ;;(m2w5)
+;;
+(m2w6)
 ;;(m2b1)
 ;;(m4w1) 
 ;;(mNw1)
