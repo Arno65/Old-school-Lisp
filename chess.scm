@@ -34,6 +34,7 @@
 ;;                                Added a check for a draw position 
 ;;  version 0.02e   2026-01-20    Some refactoring - struggles with 'tree-search'
 ;;  version 0.02f   2026-01-21    More work on the 'tree-search' -- almost working 0K. 
+;;  version 1.00a   2026-01-21    'tree-search' working 0K. Up to Mate-in-4 working 0K.
 ;;
 ;;
 ;;
@@ -69,14 +70,15 @@
 (define code-info
   (string-append
    "\n\n* * *   a tiny and simple Lisp/Scheme chess engine   * * *\n\n"
-   "version 0.02f  "
+   "version 1.00a  "
    "(cl) 2025-12-31, 2026-01-21  by Arno Jacobs\n\n"))
 
 ;; Chess board dimensions
 (define width  8)
 (define height 8)
 
-(define search-depth 3)
+(define search-depth 3)  ;; mate-in-2
+;; (define search-depth 7)  ;; mate-in-4
 
 (define Checkmate 42)
 (define Draw      77)
@@ -1110,8 +1112,7 @@
             (if (= depth 1)
                 board-score
                 (let ((next-opponents-moves (all-moves-list next-board (opponents-colour player-colour))))
-                  (* depth
-                     (if (null? next-opponents-moves)
+                  (if (null? next-opponents-moves)
                       (negate Stalemate-value)
                       (negate (apply max
                                      (map (lambda (move)
@@ -1119,16 +1120,16 @@
                                                          next-board
                                                          (opponents-colour player-colour)
                                                          (- depth 1))
-                                            ) next-opponents-moves )))))))))))
+                                            ) next-opponents-moves ))))))))))
 
 (define (best-move board player-colour)
   (let ((next-player-moves (all-moves-list board player-colour)))
     (define scored-moves
       (map (lambda (move)
-             (list (search-tree move board player-colour search-depth) move)) next-player-moves)) 
-    (display "\nbest moves: ")
+             (list (search-tree move board player-colour search-depth) move)) next-player-moves))
     (let ((best-moves (filter-top-scores scored-moves)))
-      (display best-moves)
+;;      (display "\nbest moves: ")
+;;      (display best-moves)
       (second (random-element best-moves)))))
 
 
@@ -1210,13 +1211,13 @@
            (display (string-append
                      "\n* * *  Checkmate! * * *   by "
                      (pretty-colour-plus (colour (first game)))
-                     "\n\nThanks for the game. Bye bye.\n\n")))
+                     "\n\nThank you and bye bye.\n\n")))
            ((= game-state Draw)
             (display (string-append
                       "\n* a draw * "
-                     "\n\nThanks for the game. Bye bye.\n\n")))
+                     "\n\nThank you and bye bye.\n\n")))
            (else             
-            (display "\nYou quit, thanks for the game. Bye bye.\n\n")))))
+            (display "\nYou quit. Thank you and bye bye.\n\n")))))
 
 
 ;;
