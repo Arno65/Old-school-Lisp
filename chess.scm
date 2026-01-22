@@ -35,10 +35,10 @@
 ;;  version 0.02e   2026-01-20    Some refactoring - struggles with 'tree-search'
 ;;  version 0.02f   2026-01-21    More work on the 'tree-search' -- almost working 0K. 
 ;;  version 1.00a   2026-01-21    'tree-search' working 0K. Up to Mate-in-4 working 0K.
+;;  version 1.00b   2026-01-22    Added test boards and some minor changes
 ;;
 ;;
-;;
-;;  (cl) 2025-12-31, 2026-01-21 by Arno Jacobs
+;;  (cl) 2025-12-31, 2026-01-22 by Arno Jacobs
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 ;; Info on chess
 ;;
@@ -65,7 +65,7 @@
 (require "opening-library.scm")
 
 ;; If run in DrRacket there is no ansi-colour functionality 
-(define InRacket #f)
+(define InRacket #t)
 
 ;; Chess board dimensions
 (define width  8)
@@ -95,9 +95,9 @@
 (define code-info
   (string-append
    "\n\n* * *   a tiny and simple Lisp/Scheme chess engine   * * *\n\n"
-   "version 1.00a  ("
+   "version 1.00b  ("
    (number->string search-depth)
-   " ply)   (cl) 2025-12-31, 2026-01-21  by Arno Jacobs\n\n"))
+   " ply)   (cl) 2025-12-31, 2026-01-22  by Arno Jacobs\n\n"))
 
 (define (pretty-promotion-piece)
   (string-append "\nPromotion piece is set to " (pretty-type-plus *promotion-piece*) "\n" ))
@@ -1235,6 +1235,7 @@
 (define (m2w4) (play-chess Mate-in-2-white-04 white))
 (define (m2w5) (play-chess Mate-in-2-white-05 white))
 (define (m2w6) (play-chess Mate-in-2-white-06 white))
+(define (m2w7) (play-chess Mate-in-2-white-07 white))
 (define (m2b1) (play-chess Mate-in-2-black-01 black)) ;; black
 (define (m4w1) (play-chess Mate-in-4-white-01 white))
 (define (mNw1) (play-chess Mate-in-N-white-01 white))
@@ -1246,11 +1247,12 @@
 ;; Mate-in-2 is not correct yet. SO NOT 0K.
 ;;(m2w1)
 ;;(m2w2)
-;;
-(m2w3)
+;;(m2w3)
 ;;(m2w4)
 ;;(m2w5)
 ;;(m2w6)
+;;
+(m2w7)
 ;;(m2b1)
 ;;(m4w1)
 ;;(mNw1)
