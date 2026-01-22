@@ -7,8 +7,9 @@
 ;;  version 0.02b   2026-01-12    Added Piece & state values for the 'evaluate' function
 ;;  version 0.03a   2026-01-18    Removing the 'First-move' indicator
 ;;  version 0.03b   2026-01-21    Changes in piece valuation
+;;  version 0.04a   2026-01-22    Changes in Knight-position-bonus, now dependent on players colour
 ;; 
-;;  (cl) 2025-12-31, 2026-01-21 by Arno Jacobs
+;;  (cl) 2025-12-31, 2026-01-22 by Arno Jacobs
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 ;;
 ;; Using the 'scheme' language in DrRacket
@@ -39,7 +40,8 @@
 (provide Rook-value)
 (provide Pawn-value)
 
-(provide Knight-position-bonus)
+(provide Knight-position-bonus-white)
+(provide Knight-position-bonus-black)
 
 (provide En-Passant)
 (provide Castling)
@@ -71,12 +73,8 @@
 
 ;; Piece-square table
 ;; Knight position bonus
-;; https://chessenginelab.substack.com/p/simple-evaluation-and-first-game?utm_campaign=post&utm_medium=web
-;; Strange... there is no symmetry
-;; So all Knights, white and black have a higher bonus on the white side of the board
 ;;
-
-(define Knight-position-bonus-web-version
+(define Knight-position-bonus-white
   (list
    (list -50 -40 -30 -30 -30 -30 -40 -50)
    (list -40 -20   0   5   5   0 -20 -40)
@@ -87,21 +85,8 @@
    (list -40 -20   0   0   0   0 -20 -40)
    (list -50 -40 -30 -30 -30 -30 -40 -50)))
 
-;; A symmetrical version, mine...
-(define Knight-position-bonus-symmetrical
-  (list
-   (list -50 -40 -30 -30 -30 -30 -40 -50)
-   (list -40 -20   0   5   5   0 -20 -40)
-   (list -30   5  15  20  20  15   5 -30)  
-   (list -30   0  10  15  15  10   0 -30)
-   (list -30   0  10  15  15  10   0 -30)
-   (list -30   5  15  20  20  15   5 -30)
-   (list -40 -20   0   5   5   0 -20 -40)
-   (list -50 -40 -30 -30 -30 -30 -40 -50)))
-
-;; (define Knight-position-bonus Knight-position-bonus-web-version)
-;;
-(define Knight-position-bonus Knight-position-bonus-symmetrical)
+(define Knight-position-bonus-black
+  (reverse Knight-position-bonus-white))
 
 ;; Piece states
 (define En-Passant 10)

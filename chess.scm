@@ -36,6 +36,8 @@
 ;;  version 0.02f   2026-01-21    More work on the 'tree-search' -- almost working 0K. 
 ;;  version 1.00a   2026-01-21    'tree-search' working 0K. Up to Mate-in-4 working 0K.
 ;;  version 1.00b   2026-01-22    Added test boards and some minor changes
+;;  version 1.00c   2026-01-22    Added 'mate-in-1' check, refactored functions for more speed
+;;                                Changes in Knight-position-bonus, now dependent on players colour
 ;;
 ;;
 ;;  (cl) 2025-12-31, 2026-01-22 by Arno Jacobs
@@ -71,6 +73,7 @@
 (define width  8)
 (define height 8)
 
+;;
 (define search-depth 3)  ;; mate-in-2
 ;; (define search-depth 4)  ;; just for a game 
 ;; (define search-depth 5)  ;; mate-in-3
@@ -95,7 +98,7 @@
 (define code-info
   (string-append
    "\n\n* * *   a tiny and simple Lisp/Scheme chess engine   * * *\n\n"
-   "version 1.00b  ("
+   "version 1.00c  ("
    (number->string search-depth)
    " ply)   (cl) 2025-12-31, 2026-01-22  by Arno Jacobs\n\n"))
 
@@ -989,13 +992,15 @@
 ;; --- --- Knight bonusses code --- --- --- --- --- --- --- --- ---
 ;;
 ;; No range checking...
-(define (knight-bonus kx ky)
-  (nth (nth Knight-position-bonus (- ky 1)) (- kx 1)))
+(define (knight-bonus kx ky player-colour)
+  (if (= player-colour white)
+      (nth (nth Knight-position-bonus-white (- ky 1)) (- kx 1))
+      (nth (nth Knight-position-bonus-black (- ky 1)) (- kx 1))))
 
 (define (knight-bonus-xy board player-colour kx ky)
   (let ((piece-type (location-value board kx ky)))
     (if (= piece-type (* player-colour Knight))
-        (knight-bonus kx ky)
+        (knight-bonus kx ky player-colour)
         0)))
     
 (define (knight-bonusses-y board player-colour y)
@@ -1007,6 +1012,9 @@
   (apply + (do ((y height (- y 1))
                 (rv null (append (knight-bonusses-y board player-colour y) rv )))
              ((< y 1) rv))))
+
+;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
+;; My evaluate function - and yes, I'm not a good chess player
 
 (define (evaluate board player-colour)
   (let ((player-pieces-values    (get-pieces-value board player-colour))
@@ -1043,12 +1051,6 @@
 (define (random-element ls)
   (nth ls (random (length ls))))
 
-;; This code is useless, but it will generate legal moves
-;;
-(define (random-move board player-colour)
-  (let ((legal-moves (all-moves-list board player-colour)))
-    (random-element legal-moves)))
-
 ;; Look up board position in opening library
 
 (define (get-opening-move game library-game)
@@ -1079,31 +1081,13 @@
                     (random-element open-moves))))
           (best-move board player-colour))))
 
-
-;;
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
-;; Mate-in-2  -  min-max only   -   no alpha-beta pruning
+;; (deep) tree search - min-max only   -   no alpha-beta pruning
 ;;
-;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
-;;  Work in progress . . .
 
-;; Sort with highest scores at the top
-(define (score-sort scores)
-  (if (null? scores)
-      null
-      (let ((s1 (first (first scores))))
-        (define smaller (filter (lambda (score) (< (first score) s1)) scores))
-        (define equals  (filter (lambda (score) (= (first score) s1)) scores))
-        (define bigger  (filter (lambda (score) (> (first score) s1)) scores))
-        (append (score-sort bigger)
-                equals
-                (score-sort smaller)))))
-
-(define (filter-top-scores scores)
-  (let ((scs (score-sort scores)))
-    (define top-score (first (first scs)))
-    (filter (lambda (score) (= (first score) top-score)) scores)))
-      
+(define (max-scores scores)
+  (let ((max-score (apply max (map first scores))))
+    (filter (lambda (score) (= (first score) max-score)) scores)))
 
 (define (search-tree move board player-colour depth)
   (if (null? move)
@@ -1125,16 +1109,30 @@
                                                          (- depth 1))
                                             ) next-opponents-moves ))))))))))
 
+;; A quick check if there is a mate-in-1 move
+;; So there will be no useless deep tree-search for other moves
+;;
+(define (get-mate-in-1 board moves player-colour)
+  (let ((next-boards (map (lambda (move) (make-move board move)) moves)))
+    (define scored-boards
+      (map (lambda (next-board) (evaluate next-board player-colour)) next-boards))
+    (define scored-moves (map list scored-boards moves))
+    (define rls (max-scores scored-moves))
+    (if (null? rls)
+        NoMoves
+        (if (> (first (first rls)) Checkmate-range)
+            (second (first rls))
+            NoMoves))))
+
 (define (best-move board player-colour)
   (let ((next-player-moves (all-moves-list board player-colour)))
-    (define scored-moves
-      (map (lambda (move)
-             (list (search-tree move board player-colour search-depth) move)) next-player-moves))
-    (let ((best-moves (filter-top-scores scored-moves)))
-;;      (display "\nbest moves: ")
-;;      (display best-moves)
-      (second (random-element best-moves)))))
-
+    (define mate-in-1 (get-mate-in-1 board next-player-moves player-colour))
+    (if (null? mate-in-1)
+        (let ((scored-moves
+               (map (lambda (move)
+                      (list (search-tree move board player-colour search-depth) move)) next-player-moves)))
+                (second (random-element (max-scores scored-moves))))
+        mate-in-1)))
 
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 ;; Display the list of moves made in the game
@@ -1247,12 +1245,12 @@
 ;; Mate-in-2 is not correct yet. SO NOT 0K.
 ;;(m2w1)
 ;;(m2w2)
-;;(m2w3)
+;;
+(m2w3)
 ;;(m2w4)
 ;;(m2w5)
 ;;(m2w6)
-;;
-(m2w7)
+;;(m2w7)
 ;;(m2b1)
 ;;(m4w1)
 ;;(mNw1)
