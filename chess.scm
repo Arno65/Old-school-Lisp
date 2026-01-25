@@ -38,9 +38,10 @@
 ;;  version 1.00b   2026-01-22    Added test boards and some minor changes
 ;;  version 1.00c   2026-01-22    Added 'mate-in-1' check, refactored functions for more speed
 ;;                                Changes in Knight-position-bonus, now dependent on players colour
+;;  version 1.00d   2026-01-25    Small changes - based on new Common Lisp version of this code
 ;;
 ;;
-;;  (cl) 2025-12-31, 2026-01-22 by Arno Jacobs
+;;  (cl) 2025-12-31, 2026-01-25 by Arno Jacobs
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 ;; Info on chess
 ;;
@@ -98,9 +99,9 @@
 (define code-info
   (string-append
    "\n\n* * *   a tiny and simple Lisp/Scheme chess engine   * * *\n\n"
-   "version 1.00c  ("
+   "version 1.00d  ("
    (number->string search-depth)
-   " ply)   (cl) 2025-12-31, 2026-01-22  by Arno Jacobs\n\n"))
+   " ply)   (cl) 2025-12-31, 2026-01-25  by Arno Jacobs\n\n"))
 
 (define (pretty-promotion-piece)
   (string-append "\nPromotion piece is set to " (pretty-type-plus *promotion-piece*) "\n" ))
@@ -824,19 +825,14 @@
   (display "    s     show the current promotion piece\n")
   (display "    q     quit the game.\n\n"))
 
-(define (move-string-to-list move)
-  (list (list (- (char->integer (first  move)) 96)
-              (- (char->integer (second move)) 48))
-        (list (- (char->integer (third  move)) 96)
-              (- (char->integer (fourth move)) 48))))
-  
+
 (define (parse-move board player-colour entered-move game open-library?)
   (let ((move (string->list entered-move)))
     (if (null? move)
         NoMoves
-        (let ((cmd (first move)))
-          (if (= 4 (length move))
-              (move-string-to-list move)
+        (if (= 4 (length move))
+            (move-to-list entered-move)
+            (let ((cmd (first move)))
               (cond ((equal? cmd #\b) (display-board board))
                     ((equal? cmd #\c) (find-best-move game board player-colour open-library?))
                     ((equal? cmd #\e) (display-evaluation-score board player-colour))
@@ -1257,7 +1253,12 @@
 ;;(pD)
 ;;(tM)
 
-
+;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
+;; Fastest run:
+;; $ /Applications/Racket\ v9.0/bin/racket chess.scm
+;;
+;; This version is slow but faster than the SBCL version.
+;;
 
 ;;
 ;; End of code.

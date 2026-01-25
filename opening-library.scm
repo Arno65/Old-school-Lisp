@@ -17,6 +17,7 @@
 
 #lang scheme
 
+(provide move-to-list)
 (provide opening-library-white)
 (provide opening-library-black)
 
