@@ -14,7 +14,7 @@
 
 ;; Helper functions to convert readable string formatted moves to position lists
 ;;
-;; A string "e2e4" to ((5 2) (5 4))
+;; A string "e2e4"  to  ((5 2) (5 4))
 ;; NO full range checking
 ;;
 (define (move-to-list move)

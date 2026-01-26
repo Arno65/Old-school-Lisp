@@ -1224,7 +1224,7 @@
 (define (m2w5) (play-chess Mate-in-2-white-05 white))
 (define (m2w6) (play-chess Mate-in-2-white-06 white))
 (define (m2w7) (play-chess Mate-in-2-white-07 white))
-(define (m2b1) (play-chess Mate-in-2-black-01 black)) ;; black
+(define (m2b1) (play-chess Mate-in-2-black-01 black))   ;; black
 
 (define (m4w1) (play-chess Mate-in-4-white-01 white))
 (define (mNw1) (play-chess Mate-in-N-white-01 white))

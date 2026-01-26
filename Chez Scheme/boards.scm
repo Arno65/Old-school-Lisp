@@ -196,7 +196,7 @@
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 ;; A pre-draw situation
 ;; White to move: a1-g6 
-;; Black is NOT checked but can't move
+;; Black is NOT checked, but can't move
 (define pre-draw
   (list
    (list empty (piece white Bishop) empty empty empty empty (piece white King) empty)
