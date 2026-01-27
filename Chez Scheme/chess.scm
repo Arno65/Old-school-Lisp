@@ -42,9 +42,10 @@
 ;;                                Changes in Knight-position-bonus, now dependent on players colour
 ;;  version 1.10a   2026-01-26    A working version for Chez Scheme - run: chez chess.scm
 ;;  version 1.10b   2026-01-26    Small changes. Added + / - search depth
+;;  version 1.20a   2026-01-27    Fixed the castling rules - no more illegal castling
 ;;
 ;;
-;;  (cl) 2025-12-31, 2026-01-26 by Arno Jacobs
+;;  (cl) 2025-12-31, 2026-01-27 by Arno Jacobs
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 
 ;; A small speed increase of ~7%
@@ -68,6 +69,9 @@
 (define Draw      77)
 (define Quit      99)
 (define QuitGame (list (list Quit Quit) (list Quit Quit))) ;; format as a move
+
+(define AllMoves  64)
+(define NoKing    62)
 
 (define NoMoves '())
 
@@ -347,33 +351,66 @@
 ;; King moves
 ;;
 ;; Only check the standard King moves        
+;; Move King ONLY to a free space, the king cannot land on a square that is under attack. 
 (define (check-king-moves board x y piece-colour possible-moves)
   (filter (lambda (move) (check-move-King-Knight board x y piece-colour move)) possible-moves))
 
+;;  The Official Rules for Castling
+;;  Castling is permitted only if all of the following conditions are met: 
+;;      Never Moved:                    The king and the involved rook must not have moved previously in the game.
+;;      No Obstructions:                All squares between the king and the rook must be vacant.
+;;      Not in Check:                   The king cannot currently be in check.
+;;      No "Passing Through" Check:     The king cannot pass through a square that is under attack by an opponent's piece.
+;;      No "Ending In" Check:           The king cannot land on a square that is under attack. 
+
+(define (not-under-attack? opp-att x y)
+    (not (member (list x y) opp-att)))
+
+(define (can-do-a-short-castle? board x y piece-value opp-att)
+    (and    (not-under-attack? opp-att    x    y)
+            (not-under-attack? opp-att (+ x 1) y)
+            (not-under-attack? opp-att (+ x 2) y)
+            (is-empty? board (+ x 1) y)
+            (is-empty? board (+ x 2) y)
+            (=  (piece (colour piece-value) Rook Castling)
+                (safe-location-value board (+ x 3) y))))
+
+(define (can-do-a-long-castle? board x y piece-value opp-att) 
+    (and    (not-under-attack? opp-att    x    y)
+            (not-under-attack? opp-att (- x 1) y)
+            (not-under-attack? opp-att (- x 2) y)
+            (not-under-attack? opp-att (- x 3) y)
+            (is-empty? board (- x 1) y)
+            (is-empty? board (- x 2) y)
+            (is-empty? board (- x 3) y)
+            (=  (piece (colour piece-value) Rook Castling)
+                (safe-location-value board (- x 4) y))))
+
+(define (opponent-attacks board piece-colour)
+    (let ((opponents-moves (all-moves-no-king board piece-colour)))
+    (map second (apply append
+        (map (lambda (moves) (strip-piece-value moves)) opponents-moves)))))
+             
 ;; Here check the possible castling moves
 (define (check-castling-king-moves board x y piece-value)
-  (if (can-do-Castling? piece-value)
-      (append (if (and (is-empty? board (- x 1) y)
-                       (is-empty? board (- x 2) y)
-                       (is-empty? board (- x 3) y)
-                       (= (piece (colour piece-value) Rook Castling)
-                          (safe-location-value board (- x 4) y)))
-                  '((-3 0))
-                  NoMoves)
-              (if (and (is-empty? board (+ x 1) y)
-                       (is-empty? board (+ x 2) y)
-                       (= (piece (colour piece-value) Rook Castling)
-                          (safe-location-value board (+ x 3) y)))
-                  '((2 0))
-                  NoMoves))
-      NoMoves))
+    (let ((opp-att (opponent-attacks board (opponents-colour (colour piece-value)))))
+        (if (can-do-Castling? piece-value)
+            (append (if (can-do-a-long-castle? board x y piece-value opp-att)
+                        '((-3 0))
+                        NoMoves)
+                    (if (can-do-a-short-castle? board x y piece-value opp-att)
+                        '((2 0))
+                        NoMoves))
+            NoMoves)))
                   
 (define (king-moves board x y piece-value)
   (let ((standard-king-moves '( (-1 -1) (0 -1) (1 -1)
                                 (-1  0)         (1  0)
                                 (-1  1) (0  1) (1  1))))
-    (append (check-castling-king-moves board x y piece-value)
-            (check-king-moves board x y (colour piece-value) standard-king-moves))))
+    (if (= (get-piece-state piece-value) Castling)
+        (append (check-castling-king-moves board x y piece-value)
+                (check-king-moves board x y (colour piece-value) standard-king-moves))
+        (check-king-moves board x y (colour piece-value) standard-king-moves))))
 
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 ;; Knight moves
@@ -536,31 +573,39 @@
         (cons (list (+ x (first move)) (+ y (second move))) 
               (translate x y (rest moves))))))
 
-(define (all-moves-x-y board piece-colour x y)
-  (let ((piece-value (safe-location-value board x y)))
-    (if (or (= piece-value outside)
-            (= piece-value empty)
-            (not (= piece-colour (colour piece-value))))
-        NoMoves
-        (let ((next-moves (moves-for-location board x y)))          
-          (if (null? next-moves)
-              NoMoves
-              (cons (list piece-value (list x y))
-                    (translate x y next-moves)))))))
+(define (all-moves-x-y board piece-colour selection x y)
+    (let*  ((piece-value (safe-location-value board x y))
+            (piece-type (abs (get-piece-type piece-value))))
+        (if (and    (= selection NoKing)
+                    (= piece-type King))
+            NoMoves
+            (if (or (= piece-value outside)
+                    (= piece-value empty)
+                    (not (= piece-colour (colour piece-value))))
+                NoMoves
+                (let ((next-moves (moves-for-location board x y)))          
+                (if (null? next-moves)
+                    NoMoves
+                    (cons   (list piece-value (list x y))
+                            (translate x y next-moves))))))))
 
-(define (all-moves-y board piece-colour y)
+(define (all-moves-y board piece-colour selection y)
   (do ((x width (- x 1))
-       (rv '() (cons (all-moves-x-y board piece-colour x y) rv)))
+       (rv '() (cons (all-moves-x-y board piece-colour selection x y) rv)))
     ((< x 1) rv )))
 
-(define (all-moves-loop board piece-colour)
+(define (all-moves-loop board piece-colour selection)
   (do ((y height (- y 1))
-       (rv '() (append (all-moves-y board piece-colour y) rv)))
+       (rv '() (append (all-moves-y board piece-colour selection y) rv)))
     ((< y 1) rv)))
+
+;; This is the function without the King-move - castling helper 
+(define (all-moves-no-king board piece-colour)
+  (filter (lambda (moves) (not (null? moves))) (all-moves-loop board piece-colour NoKing)))
 
 ;; This is the function without the King-check test 
 (define (all-moves-nct board piece-colour)
-  (filter (lambda (moves) (not (null? moves))) (all-moves-loop board piece-colour)))
+  (filter (lambda (moves) (not (null? moves))) (all-moves-loop board piece-colour AllMoves)))
 
 ;; Here the list is first created via 'all-moves-1'
 ;; Next reshaped and checked for King-check-moves
@@ -1228,14 +1273,14 @@
 
 (define (m4w1) (play-chess Mate-in-4-white-01 white))
 (define (mNw1) (play-chess Mate-in-N-white-01 white))
+(define (ct1)  (play-chess castling-tests     white))
 
-;;
-(full)
 
 ;; Mate in 2
 ;;(m2w1)
 ;;(m2w2)
-;;(m2w3)
+;;
+(m2w3)
 ;;(m2w4)
 ;;(m2w5)
 ;;(m2w6)
@@ -1245,6 +1290,10 @@
 ;; misc.
 ;;(m4w1)
 ;;(mNw1)
+;;(ct1)
+
+;;(full)
+
 
 ;;
 ;; End of code.

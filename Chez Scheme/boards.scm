@@ -11,8 +11,9 @@
 ;;  version 0.02f   2026-01-20    Added 'Mate in 2' boards
 ;;  version 0.02g   2026-01-21    Added a test board
 ;;  version 0.02h   2026-01-22    Added 'Mate in 2' boards
+;;  version 0.02i   2026-01-27    Added a test setup for illegal castling moves
 ;; 
-;;  (cl) 2025-12-31, 2026-01-22 by Arno Jacobs
+;;  (cl) 2025-12-31, 2026-01-27 by Arno Jacobs
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 
 (load "chess-pieces.scm")
@@ -192,6 +193,25 @@
    (list (piece white King) empty empty empty empty empty empty empty)
    (list empty empty (piece black Bishop) empty 
          (piece black King) empty empty empty)))
+
+;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
+;; A setup for testing all castling rules
+;; White to move, test O-O and O-O-O
+(define castling-tests
+ (list
+   (list (piece white Rook Castling) empty empty empty
+         (piece white King Castling) empty empty (piece white Rook Castling))
+   (list (piece white Pawn) (piece white Pawn) (piece white Pawn) (piece white Pawn)
+         (piece white Pawn) (piece white Pawn) (piece white Pawn) (piece white Pawn))
+   (list empty (piece black Knight) empty empty empty empty (piece black Knight) empty)
+   (list empty empty empty empty empty empty empty empty)
+   (list empty empty empty empty empty empty empty empty)
+   (list empty empty empty empty empty empty empty empty)
+   (list (piece black Pawn) (piece black Pawn) (piece black Pawn) empty
+         (piece black Pawn) (piece black Pawn) (piece black Pawn) (piece black Pawn))
+   (list (piece black Rook Castling) empty (piece black Bishop) (piece black Queen)
+         (piece black King Castling) (piece black Bishop) empty (piece black Rook Castling))))
+
 
 ;; ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ---
 ;; A pre-draw situation
