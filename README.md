@@ -11,7 +11,7 @@
   Am I able to build a chess engine? . . .  for mate in 4, yes
 
   For a speedtest the Scheme code was converted to Common Lisp (SBCL). These files are also added.\
-  The CL code is slower.
+  The CL code is slower. (There is no check for illegal castling in the CL version.)
   
   Next I made the changes for Chez Scheme. This is the quickest version.\
   The Chez Scheme version is my favorite.
